@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,176 +5,252 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Road Issue Reporter</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f7f7f9; margin:0; padding:0; }
-    header { background:#0b6; color:#fff; padding:16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    h1 { font-size: 18px; margin:0; }
-    #container { max-width: 800px; margin: 24px auto; padding: 0 16px; }
-    #settings { background:#fff; padding: 12px; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    #settings input { width: 100%; padding: 8px; border-radius: 8px; border:1px solid #ddd; }
-    #chatbox { background:#fff; border-radius: 12px; height: 480px; overflow-y: auto; padding: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
-    .msg { margin: 8px 0; display: flex; gap: 8px; }
-    .msg.user { justify-content: flex-end; }
-    .bubble { max-width: 75%; padding: 10px 12px; border-radius: 12px; }
-    .user .bubble { background:#0b6; color:#fff; border-bottom-right-radius: 4px;}
-    .bot .bubble { background:#eef2f7; color:#111; border-bottom-left-radius: 4px;}
-    .timestamp { font-size: 11px; color:#888; margin-top: 2px; }
-    #controls { display:flex; gap: 8px; margin-top: 12px; }
-    #controls input[type="text"] { flex:1; padding: 10px; border:1px solid #ddd; border-radius: 10px; }
-    #controls button, #uploadBtn { background:#0b6; color:#fff; border:0; border-radius: 10px; padding: 10px 14px; cursor:pointer; }
-    #controls button:disabled { background:#9acfb8; cursor:not-allowed; }
-    #photoInput { display:none; }
-    .hint { font-size:13px; color:#666; margin-top:6px; }
-    .preview { margin: 8px 0; }
-    .preview img { max-width: 160px; border-radius: 8px; border:1px solid #ddd; }
-    footer { text-align:center; color:#888; font-size: 12px; margin: 24px 0; }
+    :root{
+      --bg:#f6f7fb;--fg:#0f172a;--muted:#6b7280;--brand:#0b6;--card:#ffffff;--ring:#cbd5e1;--danger:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji"}
+    header{position:sticky;top:0;background:var(--card);z-index:10;box-shadow:0 1px 8px rgba(2,6,23,.06)}
+    .bar{max-width:960px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
+    .title{font-weight:700}
+    .wrap{max-width:960px;margin:20px auto;padding:0 16px}
+
+    /* Settings card */
+    .settings{background:var(--card);border-radius:14px;padding:12px 12px;display:grid;grid-template-columns:1fr 180px;gap:8px;align-items:center;border:1px solid var(--ring)}
+    .settings input{width:100%;padding:10px;border:1px solid var(--ring);border-radius:10px}
+    .pill{display:inline-flex;gap:6px;align-items:center;background:#ecfdf5;color:#065f46;border:1px solid #bbf7d0;border-radius:999px;padding:6px 10px;font-size:12px}
+
+    /* Chat */
+    .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;box-shadow:0 1px 8px rgba(2,6,23,.05)}
+    #chat{height:56vh;min-height:360px;overflow:auto;padding:16px;scroll-behavior:smooth}
+    .row{display:flex;gap:10px;margin:8px 0}
+    .me{justify-content:flex-end}
+    .bubble{max-width:72%;padding:10px 12px;border-radius:14px;border:1px solid var(--ring);background:#f8fafc}
+    .me .bubble{background:#dcfce7;border-color:#a7f3d0}
+    .who{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .imgbubble{padding:6px}
+    .imgbubble img{max-width:260px;border-radius:12px;display:block}
+
+    /* Composer */
+    .composer{border-top:1px solid var(--ring);padding:10px;background:linear-gradient(180deg, rgba(246,247,251,.0), rgba(246,247,251,1));border-radius:0 0 16px 16px}
+    .toolbar{display:flex;gap:8px;align-items:center}
+    .box{position:relative;flex:1;display:flex;align-items:center}
+    .input{flex:1;padding:12px 44px 12px 12px;border:1px solid var(--ring);border-radius:12px}
+    .attach{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:6px}
+    .btn{border:0;border-radius:12px;background:var(--brand);color:#fff;padding:12px 14px;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .ghost{background:#e5e7eb;color:#111}
+    .danger{background:var(--danger)}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+    /* Drag-n-drop */
+    .drop{position:absolute;inset:0;border:2px dashed var(--brand);border-radius:12px;display:none;align-items:center;justify-content:center;background:rgba(16,185,129,.05);color:#065f46;font-weight:600}
+    .box.drag .drop{display:flex}
+
+    /* Quick replies */
+    .quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+    .chip{border:1px solid var(--ring);background:#fff;border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
+    .chip:hover{background:#f8fafc}
+
+    footer{padding:18px 0;text-align:center;color:var(--muted)}
   </style>
 </head>
 <body>
-  <header><h1>Road Issue Reporter</h1></header>
-  <div id="container">
-    <div id="settings">
-      <label for="backendUrl"><strong>Backend URL</strong></label>
-      <input id="backendUrl" placeholder="https://road-bot.onrender.com" />
-      <div class="hint">Set this to your FastAPI endpoint. Saved locally.</div>
+  <header>
+    <div class="bar">
+      <div class="dot" aria-hidden="true"></div>
+      <div class="title">Road Issue Reporter</div>
+      <span class="pill" style="margin-left:auto">PoC</span>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="settings card" style="margin-bottom:12px">
+      <label for="backend" class="who">Backend URL</label>
+      <input id="backend" placeholder="https://road-chat-backend.onrender.com"/>
     </div>
 
-    <div id="chatbox"></div>
-
-    <div class="preview" id="photoPreview"></div>
-
-    <div id="controls">
-      <input type="file" id="photoInput" accept="image/*" />
-      <button id="uploadBtn">Attach Photo</button>
-      <input type="text" id="textInput" placeholder="Type a message..." />
-      <button id="sendBtn">Send</button>
+    <div class="card" id="chatcard">
+      <div id="chat" aria-live="polite" aria-label="Conversation"></div>
+      <div class="composer">
+        <div class="toolbar">
+          <div class="box" id="dropbox">
+            <input id="text" class="input" placeholder="Type a message…  (or paste/drag a photo)" autocomplete="off"/>
+            <div class="attach">
+              <button class="btn ghost" id="choose">Attach</button>
+              <button class="btn" id="send">Send</button>
+            </div>
+            <div class="drop" id="drophelp">Drop photo to attach</div>
+            <input type="file" id="file" accept="image/*" capture="environment" hidden>
+          </div>
+        </div>
+        <div class="hint">Tip: drag & drop, paste (Ctrl/Cmd+V), or tap <strong>Attach</strong> to add a photo. We’ll ask only a couple of quick follow‑ups.</div>
+        <div class="quick" id="quick"></div>
+      </div>
     </div>
 
-    <div class="hint">Tip: First message can be a photo. We'll ask the minimum follow-up questions.</div>
+    <footer>
+      <a href="#" id="reset">reset session</a>
+    </footer>
   </div>
 
-  <footer>PoC – custom chat box &middot; <a href="#" onclick="clearChat();return false;">reset</a></footer>
-
   <script>
-    const chatbox = document.getElementById('chatbox');
-    const textInput = document.getElementById('textInput');
-    const photoInput = document.getElementById('photoInput');
-    const uploadBtn = document.getElementById('uploadBtn');
-    const sendBtn = document.getElementById('sendBtn');
-    const backendUrlInput = document.getElementById('backendUrl');
-    const photoPreview = document.getElementById('photoPreview');
+    const chat = document.getElementById('chat');
+    const backendInput = document.getElementById('backend');
+    const text = document.getElementById('text');
+    const sendBtn = document.getElementById('send');
+    const chooseBtn = document.getElementById('choose');
+    const file = document.getElementById('file');
+    const dropbox = document.getElementById('dropbox');
+    const quick = document.getElementById('quick');
 
-    function now() {
-      return new Date().toLocaleTimeString();
+    function sid(){
+      let v = localStorage.getItem('session_id');
+      if(!v){ v = 'sess_' + Math.random().toString(36).slice(2); localStorage.setItem('session_id', v); }
+      return v;
+    }
+    function backend(){
+      let url = localStorage.getItem('backend_url') || 'https://road-chat-backend.onrender.com';
+      backendInput.value = url; return url;
+    }
+    function saveBackend(){ const v = backendInput.value.trim(); if(v) localStorage.setItem('backend_url', v); }
+    backendInput.addEventListener('change', saveBackend); backendInput.addEventListener('blur', saveBackend);
+
+    function row(role, html){
+      const r = document.createElement('div'); r.className = 'row '+role;
+      const b = document.createElement('div'); b.className = 'bubble'; b.innerHTML = html;
+      r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight;
+      return b;
+    }
+    function imgRow(role, src){
+      const r = document.createElement('div'); r.className = 'row '+role;
+      const b = document.createElement('div'); b.className = 'bubble imgbubble';
+      const img = document.createElement('img'); img.src = src; b.appendChild(img);
+      r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight;
     }
 
-    function addMsg(role, text) {
-      const div = document.createElement('div');
-      div.className = 'msg ' + role;
-      const bubble = document.createElement('div');
-      bubble.className = 'bubble';
-      bubble.textContent = text;
-      const ts = document.createElement('div');
-      ts.className = 'timestamp';
-      ts.textContent = now();
-      const wrap = document.createElement('div');
-      wrap.appendChild(bubble);
-      wrap.appendChild(ts);
-      div.appendChild(wrap);
-      chatbox.appendChild(div);
-      chatbox.scrollTop = chatbox.scrollHeight;
+    function setQuick(options){
+      quick.innerHTML = '';
+      options.forEach(opt => {
+        const c = document.createElement('button');
+        c.className = 'chip'; c.textContent = opt.label; c.title = opt.hint || '';
+        c.addEventListener('click', () => opt.onClick());
+        quick.appendChild(c);
+      });
     }
 
-    function addPhotoPreview(file) {
+    function clearQuick(){ quick.innerHTML = ''; }
+
+    function parseGuess(text){
+      // Extract label from: "I think this looks like: pothole." (fallback best-effort)
+      const m = /looks like:\s*([\w_\-]+)/i.exec(text || '');
+      return m ? m[1].toLowerCase() : null;
+    }
+
+    async function send({textValue, fileObj}){
+      const url = backend();
+      const form = new FormData();
+      form.append('session_id', sid());
+      if(textValue) form.append('text', textValue);
+      if(fileObj) form.append('photo', fileObj, fileObj.name || 'photo.jpg');
+      sendBtn.disabled = true; chooseBtn.disabled = true;
+      try{
+        const res = await fetch(url + '/chat', { method:'POST', body: form });
+        const data = await res.json();
+        row('bot', escapeHtml(data.reply || '(no reply)'));
+
+        // Show quick replies based on context
+        const guess = parseGuess(data.reply || '');
+        if(guess){
+          setQuick([
+            {label:'Yes', onClick: ()=> { clearQuick(); row('me','Yes'); send({textValue:'yes'}); }},
+            {label:'No', onClick: ()=> { clearQuick(); row('me','No'); send({textValue:'no'}); }},
+            {label:'Change type…', hint:'Pick a different type', onClick: ()=> showTypePicker()} 
+          ]);
+        } else if(/How severe is it\?/i.test(data.reply||'')){
+          setQuick([
+            {label:'Minor', onClick: ()=> { clearQuick(); row('me','minor'); send({textValue:'minor'}); }},
+            {label:'Moderate', onClick: ()=> { clearQuick(); row('me','moderate'); send({textValue:'moderate'}); }},
+            {label:'Severe', onClick: ()=> { clearQuick(); row('me','severe'); send({textValue:'severe'}); }}
+          ]);
+        } else if(/What road/i.test(data.reply||'')){
+          setQuick([
+            {label:'Type location…', onClick: ()=> text.focus()}
+          ]);
+        } else {
+          clearQuick();
+        }
+      }catch(e){
+        row('bot', `<span style="color:var(--danger)">Error contacting backend: ${escapeHtml(e.message)}</span>`);
+      }finally{
+        sendBtn.disabled = false; chooseBtn.disabled = false;
+      }
+    }
+
+    function showTypePicker(){
+      const types = ['pothole','cracking','shoulder_drop','guardrail','sign','drainage','debris','snow_ice'];
+      setQuick(types.map(t=>({label:t.replace('_',' '), onClick: ()=>{ clearQuick(); row('me', t.replace('_',' ')); send({textValue:t}); }})));
+    }
+
+    function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+    // --- UX: Attach flow ---
+    chooseBtn.addEventListener('click', ()=> file.click());
+    file.addEventListener('change', ()=>{
+      const f = file.files[0]; if(!f) return;
       const reader = new FileReader();
-      reader.onload = () => {
-        photoPreview.innerHTML = '<img src="'+reader.result+'" alt="photo preview" />';
-      };
-      reader.readAsDataURL(file);
-    }
-
-    function getSessionId() {
-      let sid = localStorage.getItem('session_id');
-      if (!sid) {
-        sid = 'sess_' + Math.random().toString(36).slice(2);
-        localStorage.setItem('session_id', sid);
-      }
-      return sid;
-    }
-
-    function getBackendUrl() {
-      let url = localStorage.getItem('backend_url') || 'http://127.0.0.1:8080';
-      backendUrlInput.value = url;
-      return url;
-    }
-
-    function saveBackendUrl() {
-      const url = backendUrlInput.value.trim();
-      if (url) localStorage.setItem('backend_url', url);
-    }
-
-    backendUrlInput.addEventListener('change', saveBackendUrl);
-    backendUrlInput.addEventListener('blur', saveBackendUrl);
-
-    uploadBtn.addEventListener('click', () => photoInput.click());
-    photoInput.addEventListener('change', () => {
-      if (photoInput.files && photoInput.files[0]) {
-        addPhotoPreview(photoInput.files[0]);
-      }
+      reader.onload = ()=> imgRow('me', reader.result);
+      reader.readAsDataURL(f);
+      clearQuick();
+      send({ fileObj: f });
+      file.value = '';
     });
 
-    async function sendMessage() {
-      const backend = getBackendUrl();
-      const sid = getSessionId();
-      const text = textInput.value.trim();
-      const photo = photoInput.files[0] || null;
+    // Drag & drop
+    ['dragenter','dragover'].forEach(ev=> dropbox.addEventListener(ev, e=>{ e.preventDefault(); dropbox.classList.add('drag'); }));
+    ;['dragleave','dragend','drop'].forEach(ev=> dropbox.addEventListener(ev, e=>{ e.preventDefault(); dropbox.classList.remove('drag'); }));
+    dropbox.addEventListener('drop', e=>{
+      const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(!f) return;
+      const reader = new FileReader(); reader.onload=()=> imgRow('me', reader.result); reader.readAsDataURL(f);
+      clearQuick();
+      send({ fileObj: f });
+    });
 
-      if (!text && !photo) {
-        addMsg('bot', 'Please type a message or attach a photo.');
-        return;
-      }
-
-      if (text) addMsg('user', text);
-      if (photo) addMsg('user', '[Photo attached]');
-
-      const form = new FormData();
-      form.append('session_id', sid);
-      if (text) form.append('text', text);
-      if (photo) form.append('photo', photo);
-
-      sendBtn.disabled = true;
-      uploadBtn.disabled = true;
-
-      try {
-        const res = await fetch(backend + '/chat', { method:'POST', body: form });
-        const data = await res.json();
-        addMsg('bot', data.reply || '(no reply)');
-        if (data.done) {
-          addMsg('bot', '✅ Report complete. Thank you!');
-          photoPreview.innerHTML = '';
+    // Paste image or text
+    document.addEventListener('paste', (e)=>{
+      if(e.clipboardData){
+        const items = e.clipboardData.items;
+        for(const it of items){
+          if(it.type && it.type.startsWith('image/')){
+            const f = it.getAsFile();
+            const reader = new FileReader(); reader.onload=()=> imgRow('me', reader.result); reader.readAsDataURL(f);
+            clearQuick();
+            send({ fileObj: f });
+            return;
+          }
         }
-      } catch (e) {
-        addMsg('bot', 'Error contacting backend: ' + e.message);
-      } finally {
-        textInput.value = '';
-        photoInput.value = '';
-        sendBtn.disabled = false;
-        uploadBtn.disabled = false;
       }
-    }
+      // otherwise, let text paste into input
+    });
 
-    function clearChat() {
-      localStorage.removeItem('session_id');
-      chatbox.innerHTML = '';
-      photoPreview.innerHTML = '';
-      addMsg('bot', 'Session reset. Start by attaching a photo or typing a message.');
-    }
+    // Send text
+    sendBtn.addEventListener('click', ()=> {
+      const val = text.value.trim(); if(!val) return;
+      row('me', escapeHtml(val)); text.value = ''; clearQuick();
+      send({ textValue: val });
+    });
+    text.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendBtn.click(); }});
 
-    document.getElementById('sendBtn').addEventListener('click', sendMessage);
-    textInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendMessage(); });
+    // Reset session
+    document.getElementById('reset').addEventListener('click', (e)=>{
+      e.preventDefault(); localStorage.removeItem('session_id'); chat.innerHTML=''; clearQuick();
+      row('bot', 'Session reset. Attach a photo or type a message to begin.');
+    });
 
-    // init
-    getBackendUrl();
-    addMsg('bot', 'Hi! Please attach a photo of the road issue or describe it. I’ll only ask a couple of quick follow-ups.');
+    // Init
+    backend();
+    row('bot', 'Hi! Attach a photo (drag, paste, or tap Attach) or describe the road issue. I’ll ask just a couple of follow‑ups.');
   </script>
 </body>
 </html>
