@@ -6,74 +6,58 @@
   <title>Road Issue Reporter</title>
   <style>
     :root{
-      --bg: #0b0f14;
-      --card: #121820;
-      --muted: #94a3b8;
-      --text: #e5eef7;
-      --accent: #2dd4bf;
-      --accent-2: #60a5fa;
-      --danger: #ef4444;
-      --ok: #22c55e;
-      --chip: #1f2937;
-      --chip-hover: #2b3542;
-      --radius: 16px;
+      --bg:#0b0f14; --card:#121820; --muted:#94a3b8; --text:#e5eef7;
+      --line:#1e293b; --chip:#1f2937; --chip-hover:#2b3542;
+      --radius:16px;
     }
-    html,body{height:100%;}
-    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";}
+    @media (prefers-color-scheme: light){
+      :root{--bg:#f8fafc; --card:#ffffff; --text:#0b1220; --muted:#4b5563; --line:#e5e7eb; --chip:#f2f4f8; --chip-hover:#e5e7eb}
+    }
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,Inter,"Helvetica Neue",Arial}
     *{box-sizing:border-box}
 
-    /* Layout */
-    .app{display:grid; grid-template-rows:auto 1fr auto; height:100svh; }
-    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(180%) blur(8px); background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.65)); border-bottom:1px solid #1e293b;}
-    header .bar{display:flex; align-items:center; gap:.75rem; padding:.75rem .9rem;}
-    header .brand{font-weight:700; letter-spacing:.2px;}
-    header .url{flex:1; display:flex; gap:.5rem;}
-    header input[type="url"]{flex:1; min-width:0; background:var(--card); border:1px solid #1e293b; color:var(--text); padding:.6rem .8rem; border-radius:12px;}
-    header button.small{padding:.55rem .7rem; border-radius:12px; border:1px solid #1e293b; background:#0f172a; color:var(--text);}
+    .app{display:grid;grid-template-rows:auto 1fr auto;min-height:100svh}
 
-    main{overflow:auto; padding: .75rem .9rem 6.5rem;}
-    .chat{display:flex; flex-direction:column; gap:.6rem;}
+    /* Header */
+    header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,0));padding:.6rem .9rem;border-bottom:1px solid var(--line)}
+    .bar{display:flex;align-items:center;gap:.6rem}
+    .brand{font-weight:700}
+    .spacer{flex:1}
+    .iconbtn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:.45rem .6rem}
 
-    .row{display:flex; gap:.6rem; align-items:flex-end;}
+    /* Settings panel */
+    .panel{display:none;padding:.6rem .9rem;border-bottom:1px solid var(--line);background:var(--card)}
+    .panel.open{display:block}
+    .rowc{display:flex;gap:.5rem;align-items:center}
+    input[type=url]{flex:1;min-width:0;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem}
+
+    /* Chat */
+    main{overflow:auto;padding: .8rem .9rem 8.5rem}
+    .chat{display:flex;flex-direction:column;gap:.6rem}
+    .row{display:flex;gap:.6rem;align-items:flex-end}
     .row.me{justify-content:flex-end}
-    .bubble{max-width: min(82%, 36rem); padding:.65rem .8rem; border-radius:18px; background:var(--card); border:1px solid #1e293b; box-shadow:0 1px 0 rgba(255,255,255,.03) inset;}
-    .row.me .bubble{background:#1e293b; border-color:#334155}
-    .meta{font-size:.8rem; color:var(--muted)}
-
-    .thumb{border-radius:14px; display:block; max-width: min(82vw, 320px); height:auto; border:1px solid #1e293b;}
+    .bubble{max-width:min(82%,36rem);padding:.65rem .8rem;border-radius:18px;background:var(--card);border:1px solid var(--line)}
+    .row.me .bubble{background:#1f2937}
+    .thumb{display:block;max-width:min(82vw,320px);border-radius:14px;border:1px solid var(--line)}
+    .bot{opacity:.92}
 
     /* Composer */
-    .composer{position:fixed; left:0; right:0; bottom:0; z-index:10; padding: .6rem .9rem calc(env(safe-area-inset-bottom) + .6rem); background:linear-gradient(0deg, rgba(11,15,20,.95), rgba(11,15,20,.7)); border-top:1px solid #1e293b;}
-    .composer .bar{display:flex; gap:.5rem; align-items:flex-end;}
-    .input{flex:1; background:var(--card); border:1px dashed #334155; border-radius:16px; padding:.55rem .7rem; min-height:48px; position:relative;}
-    .input:focus-within{border-style:solid;}
-    textarea{background:transparent; color:var(--text); border:0; resize:none; width:100%; max-height:30svh; outline:none; font:16px/1.35 inherit;}
-    .actions{display:flex; gap:.5rem;}
-    .btn{appearance:none; border:1px solid #334155; background:#0f172a; color:var(--text); padding:.7rem .9rem; border-radius:14px; min-height:44px; min-width:44px;}
-    .btn.primary{background:linear-gradient(180deg, #0ea5e9, #2563eb); border:0;}
-    .btn.ghost{background:#0b1220}
+    .composer{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:.6rem .9rem calc(env(safe-area-inset-bottom) + .6rem);background:linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,0));border-top:1px solid var(--line)}
+    .cbar{display:flex;gap:.5rem;align-items:flex-end}
+    .input{flex:1;background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:.55rem .7rem;min-height:48px}
+    .input:focus-within{border-style:solid}
+    textarea{background:transparent;border:0;outline:0;resize:none;width:100%;max-height:32svh;color:var(--text);font:16px/1.35 inherit}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:.7rem .9rem;min-height:44px;min-width:44px}
+    .primary{background:#2563eb;border:0}
 
-    .chips{display:flex; gap:.4rem; flex-wrap:wrap; margin:.5rem .1rem 0;}
-    .chip{background:var(--chip); border:1px solid #2a3646; color:var(--text); padding:.5rem .7rem; border-radius:999px; font-size:.9rem; min-height:40px;}
-    .chip:active, .chip:hover{background:var(--chip-hover)}
+    /* Chips (contextual) */
+    .chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem .05rem 0}
+    .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:.5rem .75rem;font-size:.93rem}
+    .chip:active,.chip:hover{background:var(--chip-hover)}
 
-    .hint{color:var(--muted); font-size:.85rem; margin-top:.25rem}
-
-    /* Mobile tweaks */
-    @media (max-width: 480px){
-      header .brand{font-size:1rem}
-      .bubble{max-width:90%}
-      header .url{display:none} /* keep clean on very small screens */
-    }
-
-    @media (prefers-color-scheme: light){
-      :root{--bg:#f8fafc; --card:#ffffff; --text:#0b1220; --muted:#4b5563; --chip:#f2f4f8; --chip-hover:#e5e7eb}
-      header{background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.65)); border-bottom:1px solid #e5e7eb}
-      .row.me .bubble{background:#e5f0ff; border-color:#cfe0ff}
-      .input{border-color:#d1d5db}
-      .composer{background:linear-gradient(0deg, rgba(255,255,255,.95), rgba(255,255,255,.7)); border-top:1px solid #e5e7eb}
-      .btn.ghost{background:#fff}
-    }
+    .hint{color:var(--muted);font-size:.85rem;margin-top:.25rem}
+    @media (max-width:480px){ .brand{font-size:1rem} .bubble{max-width:90%} }
   </style>
 </head>
 <body>
@@ -81,177 +65,160 @@
     <header>
       <div class="bar">
         <div class="brand">🛣️ Road Issue Reporter</div>
-        <div class="url">
-          <input id="backend" type="url" inputmode="url" placeholder="Backend URL (e.g. https://road-chat-backend.onrender.com)"/>
-          <button class="small" id="saveUrl">Save</button>
+        <div class="spacer"></div>
+        <button id="gear" class="iconbtn" title="Settings">⚙️</button>
+        <button id="exportBtn" class="iconbtn" title="Download CSV">⬇️</button>
+      </div>
+      <div id="panel" class="panel">
+        <div class="rowc">
+          <input id="backend" type="url" placeholder="Backend URL (e.g. https://road-chat-backend.onrender.com)" />
+          <button id="saveUrl" class="iconbtn">Save</button>
         </div>
-        <button class="small" id="exportBtn" title="Download CSV">Export</button>
       </div>
     </header>
 
-    <main>
-      <div id="chat" class="chat"></div>
-    </main>
+    <main><div id="chat" class="chat"></div></main>
 
     <div class="composer">
-      <div class="bar">
-        <div class="input" id="dropzone">
-          <textarea id="msg" rows="1" placeholder="Describe the issue or drop/paste a photo…"></textarea>
-        </div>
-        <div class="actions">
-          <input id="file" type="file" accept="image/*" capture="environment" hidden />
-          <button class="btn ghost" id="attach">📷</button>
-          <button class="btn primary" id="send">Send</button>
-        </div>
+      <div class="cbar">
+        <div id="dropzone" class="input"><textarea id="msg" rows="1" placeholder="Describe the issue or drop/paste a photo…"></textarea></div>
+        <input id="file" type="file" accept="image/*" capture="environment" hidden />
+        <button id="attach" class="btn" title="Attach photo">📷</button>
+        <button id="send" class="btn primary">Send</button>
       </div>
-      <div id="quick" class="chips"></div>
-      <div class="hint">Tip: you can paste images, drag & drop, or tap 📷 to open your camera.</div>
+      <div id="chips" class="chips"></div>
+      <div class="hint">Tip: paste/drag an image or tap 📷. Chips appear only when follow-ups are needed.</div>
     </div>
   </div>
 
   <script>
-    // --- tiny utilities ---
-    const $ = sel => document.querySelector(sel);
-    const chat = $('#chat');
-    const input = $('#msg');
-    const fileInput = $('#file');
-    const dropzone = $('#dropzone');
+    // --------- tiny utils
+    const $ = s => document.querySelector(s);
+    const chat = $('#chat'), input = $('#msg'), fileInput = $('#file'), dropzone = $('#dropzone'), chips = $('#chips');
 
-    function sid(){
-      let v = localStorage.getItem('sid');
-      if (!v){ v = crypto.randomUUID(); localStorage.setItem('sid', v); }
-      return v;
-    }
-    function backend(val){
-      if (val!==undefined){ localStorage.setItem('backend', val); return val; }
-      return localStorage.getItem('backend') || '';
-    }
+    function sid(){ let v = localStorage.getItem('sid'); if(!v){ v = crypto.randomUUID(); localStorage.setItem('sid',v); } return v; }
+    function backend(v){ if(v!==undefined){ localStorage.setItem('backend',v); return v; } return localStorage.getItem('backend')||''; }
 
     function row(role, html){
-      const r = document.createElement('div');
-      r.className = 'row ' + role;
-      const b = document.createElement('div');
-      b.className = 'bubble';
-      b.innerHTML = html;
-      r.appendChild(b);
-      chat.appendChild(r);
-      chat.scrollTop = chat.scrollHeight;
-      return b;
+      const r = document.createElement('div'); r.className = 'row '+role;
+      const b = document.createElement('div'); b.className = 'bubble '+(role==='bot'?'bot':'');
+      b.innerHTML = html; r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight; return b;
     }
     function imgRow(role, blobUrl){
-      const r = document.createElement('div'); r.className = 'row ' + role;
+      const r = document.createElement('div'); r.className = 'row '+role;
       const b = document.createElement('div'); b.className = 'bubble';
-      const img = document.createElement('img'); img.src = blobUrl; img.className='thumb'; img.alt='attached photo';
+      const img = document.createElement('img'); img.src = blobUrl; img.className = 'thumb'; img.alt = 'attached photo';
       b.appendChild(img); r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight; return img;
     }
 
-    function setQuickChips(kind){
-      const wrap = $('#quick');
-      wrap.innerHTML = '';
-      // Always useful chips
-      const chips = [
-        ['Use my location', onUseLocation],
-        ['Lane: Yes', ()=>send({textValue:'lane blocked yes'})],
-        ['Lane: No', ()=>send({textValue:'lane not blocked'})],
-        ['Severity: Minor', ()=>send({textValue:'severity minor'})],
-        ['Severity: Moderate', ()=>send({textValue:'severity moderate'})],
-        ['Severity: Severe', ()=>send({textValue:'severity severe'})],
-      ];
-      // Extra: common issue types
-      const issues = ['pothole','cracking','shoulder drop','guardrail','sign','drainage','debris','snow ice'];
-      issues.forEach(name=> chips.push([name, ()=>send({textValue:name})]));
-      for (const [label, handler] of chips){
-        const c = document.createElement('button'); c.className='chip'; c.textContent = label; c.onclick = handler; wrap.appendChild(c);
+    // ---------- contextual chips ----------
+    function setChipsFor(message){
+      chips.innerHTML = '';   // clear
+      if(!message) return;
+
+      const m = message.toLowerCase();
+
+      // Only show after initial bot message or any explicit question
+      const wantsSeverity = /severity/.test(m);
+      const wantsLane     = /(lane.*blocked|blocked.*lane|whether a lane)/.test(m);
+      const wantsType     = /(what best describes the issue|problem type|issue type)/.test(m);
+      const wantsLocation = /(road name.*milepost|milepost|intersection)/.test(m);
+      const wantsGeo      = /(gps|location)/.test(m);
+
+      const add = (label, handler) => {
+        const btn = document.createElement('button');
+        btn.className='chip'; btn.textContent = label; btn.onclick = handler;
+        chips.appendChild(btn);
+      };
+
+      if(wantsLane){
+        add('Lane: Yes', ()=>send({text:'lane blocked yes'}));
+        add('Lane: No',  ()=>send({text:'lane not blocked'}));
       }
+      if(wantsSeverity){
+        add('Severity: Minor',    ()=>send({text:'severity minor'}));
+        add('Severity: Moderate', ()=>send({text:'severity moderate'}));
+        add('Severity: Severe',   ()=>send({text:'severity severe'}));
+      }
+      if(wantsType){
+        ['pothole','cracking','shoulder drop','guardrail','sign','drainage','debris','snow ice']
+          .forEach(t=> add(t, ()=>send({text:t})));
+      }
+      if(wantsLocation){
+        add('Use my location', onUseLocation);
+      } else if(wantsGeo){
+        add('Use my location', onUseLocation);
+      }
+      // If no follow-ups detected, keep chips hidden.
     }
 
-    async function onUseLocation(){
-      if (!navigator.geolocation){ row('bot','Geolocation not supported on this device.'); return; }
+    // ---------- geolocation
+    function onUseLocation(){
+      if(!navigator.geolocation){ row('bot','Geolocation not supported on this device.'); return; }
       navigator.geolocation.getCurrentPosition(pos=>{
         const {latitude, longitude} = pos.coords;
         row('me', `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
-        send({textValue:'', coords:{lat:latitude, lon:longitude}});
+        send({coords:{lat:latitude, lon:longitude}});
       }, err=>{
-        row('bot', `Couldn\'t get location (${err.code}). You can provide the road and milepost instead.`);
+        row('bot', `Couldn’t get location (${err.code}). You can provide the road & milepost instead.`);
       }, {enableHighAccuracy:true, timeout:8000, maximumAge:0});
     }
 
-    function autosize(){
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 240) + 'px';
-    }
+    // ---------- input sizing
+    function autosize(){ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,240)+'px'; }
     input.addEventListener('input', autosize);
 
-    // Paste image support
+    // paste image
     document.addEventListener('paste', (e)=>{
-      const items = e.clipboardData?.items || [];
-      for (const it of items){
-        if (it.type.startsWith('image/')){
-          const file = it.getAsFile();
-          const url = URL.createObjectURL(file);
-          imgRow('me', url);
-          send({ fileObj: file });
-          e.preventDefault();
-          break;
-        }
-      }
+      const it = Array.from(e.clipboardData?.items||[]).find(x=>x.type?.startsWith('image/'));
+      if(it){ const file = it.getAsFile(); const url = URL.createObjectURL(file); imgRow('me',url); send({file}); e.preventDefault(); }
     });
+    // drag & drop
+    ['dragenter','dragover'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.style.borderColor='#60a5fa';}));
+    ['dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.style.borderColor='var(--line)';}));
+    dropzone.addEventListener('drop', e=>{ const f = e.dataTransfer?.files?.[0]; if(f?.type.startsWith('image/')){ const u=URL.createObjectURL(f); imgRow('me',u); send({file:f}); } });
 
-    // Drag & drop
-    ;['dragenter','dragover'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.style.borderColor = '#60a5fa';}));
-    ;['dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.style.borderColor = '#334155';}));
-    dropzone.addEventListener('drop', e=>{
-      const f = e.dataTransfer?.files?.[0];
-      if (f && f.type.startsWith('image/')){
-        const url = URL.createObjectURL(f); imgRow('me', url); send({fileObj:f});
-      }
-    });
+    // buttons
+    $('#attach').onclick = ()=>fileInput.click();
+    fileInput.onchange   = ()=>{ const f = fileInput.files?.[0]; if(!f) return; const u=URL.createObjectURL(f); imgRow('me',u); send({file:f}); fileInput.value=''; };
+    $('#send').onclick   = ()=>{ const v=input.value.trim(); if(!v) return; row('me',v); send({text:v}); input.value=''; autosize(); };
 
-    $('#attach').onclick = ()=> fileInput.click();
-    fileInput.onchange = ()=>{
-      const f = fileInput.files?.[0]; if(!f) return;
-      const url = URL.createObjectURL(f); imgRow('me', url); send({fileObj:f}); fileInput.value='';
-    };
+    // settings panel
+    const panel = $('#panel');
+    $('#gear').onclick   = ()=> panel.classList.toggle('open');
+    $('#saveUrl').onclick= ()=>{ const v=$('#backend').value.trim(); if(!v) return; backend(v); row('bot','Saved backend URL.'); panel.classList.remove('open'); };
+    $('#backend').value = backend();
 
-    $('#send').onclick = ()=>{
-      const val = input.value.trim(); if(!val) return;
-      row('me', val); send({ textValue: val }); input.value=''; autosize();
-    };
+    // export
+    $('#exportBtn').onclick = ()=>{ const url=backend(); if(!url){ row('bot','Set backend URL in ⚙️ first.'); return; } window.open(url.replace(/\/$/,'')+'/export.csv','_blank'); };
 
-    async function send({ textValue, fileObj, coords }){
+    // --------- send() to backend
+    async function send({text, file, coords}){
       const url = backend();
-      if (!url){ row('bot','Please set your backend URL (top right).'); return; }
+      if(!url){ row('bot','Please set your backend URL in ⚙️ Settings.'); return; }
       try{
         const fd = new FormData();
         fd.append('session_id', sid());
-        if (textValue !== undefined) fd.append('text', textValue);
-        if (fileObj) fd.append('photo', fileObj, fileObj.name || 'photo.jpg');
-        if (coords?.lat && coords?.lon){ fd.append('lat', String(coords.lat)); fd.append('lon', String(coords.lon)); }
-        const res = await fetch(url.replace(/\/$/, '') + '/chat', { method:'POST', body: fd });
+        if(text!==undefined) fd.append('text', text);
+        if(file) fd.append('photo', file, file.name || 'photo.jpg');
+        if(coords?.lat && coords?.lon){ fd.append('lat', String(coords.lat)); fd.append('lon', String(coords.lon)); }
+
+        const res = await fetch(url.replace(/\/$/,'')+'/chat', { method:'POST', body: fd });
         const data = await res.json();
-        // Render bot reply
-        row('bot', (data.reply || '').replaceAll('\n','<br/>'));
-        setQuickChips();
-      }catch(err){
-        row('bot', '⚠️ Error contacting server. Check your backend URL and CORS.');
-        console.error(err);
+        const reply = (data.reply || '').replaceAll('\n','<br/>');
+        const bubble = row('bot', reply);
+
+        // Decide which chips to show based on the bot’s last question
+        setChipsFor(bubble.textContent.toLowerCase());
+      }catch(e){
+        console.error(e);
+        row('bot','⚠️ Could not reach backend. Check URL & CORS.');
       }
     }
 
-    // Header controls
-    $('#saveUrl').onclick = ()=>{
-      const v = $('#backend').value.trim(); if(!v) return; backend(v); row('bot', 'Saved backend URL.');
-    };
-    $('#backend').value = backend();
-
-    $('#exportBtn').onclick = ()=>{
-      const url = backend(); if(!url){ row('bot','Set backend URL first.'); return; }
-      window.open(url.replace(/\/$/, '') + '/export.csv', '_blank');
-    };
-
-    // Initial
-    row('bot', 'Hi! Attach a photo or describe the issue. You can also tap “Use my location” for GPS.');
-    setQuickChips();
+    // initial message
+    const hello = row('bot','Hi! Attach a photo or describe the issue. I’ll only ask a couple of quick follow-ups.');
+    setChipsFor(''); // none initially
   </script>
 </body>
 </html>
