@@ -1,256 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Road Issue Reporter</title>
   <style>
     :root{
-      --bg:#f6f7fb;--fg:#0f172a;--muted:#6b7280;--brand:#0b6;--card:#ffffff;--ring:#cbd5e1;--danger:#ef4444;
+      --bg: #0b0f14;
+      --card: #121820;
+      --muted: #94a3b8;
+      --text: #e5eef7;
+      --accent: #2dd4bf;
+      --accent-2: #60a5fa;
+      --danger: #ef4444;
+      --ok: #22c55e;
+      --chip: #1f2937;
+      --chip-hover: #2b3542;
+      --radius: 16px;
     }
+    html,body{height:100%;}
+    body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";}
     *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Apple Color Emoji","Segoe UI Emoji"}
-    header{position:sticky;top:0;background:var(--card);z-index:10;box-shadow:0 1px 8px rgba(2,6,23,.06)}
-    .bar{max-width:960px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:12px}
-    .dot{width:10px;height:10px;border-radius:50%;background:var(--brand)}
-    .title{font-weight:700}
-    .wrap{max-width:960px;margin:20px auto;padding:0 16px}
 
-    /* Settings card */
-    .settings{background:var(--card);border-radius:14px;padding:12px 12px;display:grid;grid-template-columns:1fr 180px;gap:8px;align-items:center;border:1px solid var(--ring)}
-    .settings input{width:100%;padding:10px;border:1px solid var(--ring);border-radius:10px}
-    .pill{display:inline-flex;gap:6px;align-items:center;background:#ecfdf5;color:#065f46;border:1px solid #bbf7d0;border-radius:999px;padding:6px 10px;font-size:12px}
+    /* Layout */
+    .app{display:grid; grid-template-rows:auto 1fr auto; height:100svh; }
+    header{position:sticky; top:0; z-index:5; backdrop-filter:saturate(180%) blur(8px); background:linear-gradient(180deg, rgba(11,15,20,.9), rgba(11,15,20,.65)); border-bottom:1px solid #1e293b;}
+    header .bar{display:flex; align-items:center; gap:.75rem; padding:.75rem .9rem;}
+    header .brand{font-weight:700; letter-spacing:.2px;}
+    header .url{flex:1; display:flex; gap:.5rem;}
+    header input[type="url"]{flex:1; min-width:0; background:var(--card); border:1px solid #1e293b; color:var(--text); padding:.6rem .8rem; border-radius:12px;}
+    header button.small{padding:.55rem .7rem; border-radius:12px; border:1px solid #1e293b; background:#0f172a; color:var(--text);}
 
-    /* Chat */
-    .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;box-shadow:0 1px 8px rgba(2,6,23,.05)}
-    #chat{height:56vh;min-height:360px;overflow:auto;padding:16px;scroll-behavior:smooth}
-    .row{display:flex;gap:10px;margin:8px 0}
-    .me{justify-content:flex-end}
-    .bubble{max-width:72%;padding:10px 12px;border-radius:14px;border:1px solid var(--ring);background:#f8fafc}
-    .me .bubble{background:#dcfce7;border-color:#a7f3d0}
-    .who{font-size:12px;color:var(--muted);margin-bottom:4px}
-    .imgbubble{padding:6px}
-    .imgbubble img{max-width:260px;border-radius:12px;display:block}
+    main{overflow:auto; padding: .75rem .9rem 6.5rem;}
+    .chat{display:flex; flex-direction:column; gap:.6rem;}
+
+    .row{display:flex; gap:.6rem; align-items:flex-end;}
+    .row.me{justify-content:flex-end}
+    .bubble{max-width: min(82%, 36rem); padding:.65rem .8rem; border-radius:18px; background:var(--card); border:1px solid #1e293b; box-shadow:0 1px 0 rgba(255,255,255,.03) inset;}
+    .row.me .bubble{background:#1e293b; border-color:#334155}
+    .meta{font-size:.8rem; color:var(--muted)}
+
+    .thumb{border-radius:14px; display:block; max-width: min(82vw, 320px); height:auto; border:1px solid #1e293b;}
 
     /* Composer */
-    .composer{border-top:1px solid var(--ring);padding:10px;background:linear-gradient(180deg, rgba(246,247,251,.0), rgba(246,247,251,1));border-radius:0 0 16px 16px}
-    .toolbar{display:flex;gap:8px;align-items:center}
-    .box{position:relative;flex:1;display:flex;align-items:center}
-    .input{flex:1;padding:12px 44px 12px 12px;border:1px solid var(--ring);border-radius:12px}
-    .attach{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:6px}
-    .btn{border:0;border-radius:12px;background:var(--brand);color:#fff;padding:12px 14px;cursor:pointer}
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .ghost{background:#e5e7eb;color:#111}
-    .danger{background:var(--danger)}
-    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+    .composer{position:fixed; left:0; right:0; bottom:0; z-index:10; padding: .6rem .9rem calc(env(safe-area-inset-bottom) + .6rem); background:linear-gradient(0deg, rgba(11,15,20,.95), rgba(11,15,20,.7)); border-top:1px solid #1e293b;}
+    .composer .bar{display:flex; gap:.5rem; align-items:flex-end;}
+    .input{flex:1; background:var(--card); border:1px dashed #334155; border-radius:16px; padding:.55rem .7rem; min-height:48px; position:relative;}
+    .input:focus-within{border-style:solid;}
+    textarea{background:transparent; color:var(--text); border:0; resize:none; width:100%; max-height:30svh; outline:none; font:16px/1.35 inherit;}
+    .actions{display:flex; gap:.5rem;}
+    .btn{appearance:none; border:1px solid #334155; background:#0f172a; color:var(--text); padding:.7rem .9rem; border-radius:14px; min-height:44px; min-width:44px;}
+    .btn.primary{background:linear-gradient(180deg, #0ea5e9, #2563eb); border:0;}
+    .btn.ghost{background:#0b1220}
 
-    /* Drag-n-drop */
-    .drop{position:absolute;inset:0;border:2px dashed var(--brand);border-radius:12px;display:none;align-items:center;justify-content:center;background:rgba(16,185,129,.05);color:#065f46;font-weight:600}
-    .box.drag .drop{display:flex}
+    .chips{display:flex; gap:.4rem; flex-wrap:wrap; margin:.5rem .1rem 0;}
+    .chip{background:var(--chip); border:1px solid #2a3646; color:var(--text); padding:.5rem .7rem; border-radius:999px; font-size:.9rem; min-height:40px;}
+    .chip:active, .chip:hover{background:var(--chip-hover)}
 
-    /* Quick replies */
-    .quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-    .chip{border:1px solid var(--ring);background:#fff;border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
-    .chip:hover{background:#f8fafc}
+    .hint{color:var(--muted); font-size:.85rem; margin-top:.25rem}
 
-    footer{padding:18px 0;text-align:center;color:var(--muted)}
+    /* Mobile tweaks */
+    @media (max-width: 480px){
+      header .brand{font-size:1rem}
+      .bubble{max-width:90%}
+      header .url{display:none} /* keep clean on very small screens */
+    }
+
+    @media (prefers-color-scheme: light){
+      :root{--bg:#f8fafc; --card:#ffffff; --text:#0b1220; --muted:#4b5563; --chip:#f2f4f8; --chip-hover:#e5e7eb}
+      header{background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.65)); border-bottom:1px solid #e5e7eb}
+      .row.me .bubble{background:#e5f0ff; border-color:#cfe0ff}
+      .input{border-color:#d1d5db}
+      .composer{background:linear-gradient(0deg, rgba(255,255,255,.95), rgba(255,255,255,.7)); border-top:1px solid #e5e7eb}
+      .btn.ghost{background:#fff}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="bar">
-      <div class="dot" aria-hidden="true"></div>
-      <div class="title">Road Issue Reporter</div>
-      <span class="pill" style="margin-left:auto">PoC</span>
-    </div>
-  </header>
-
-  <div class="wrap">
-    <div class="settings card" style="margin-bottom:12px">
-      <label for="backend" class="who">Backend URL</label>
-      <input id="backend" placeholder="https://road-chat-backend.onrender.com"/>
-    </div>
-
-    <div class="card" id="chatcard">
-      <div id="chat" aria-live="polite" aria-label="Conversation"></div>
-      <div class="composer">
-        <div class="toolbar">
-          <div class="box" id="dropbox">
-            <input id="text" class="input" placeholder="Type a message…  (or paste/drag a photo)" autocomplete="off"/>
-            <div class="attach">
-              <button class="btn ghost" id="choose">Attach</button>
-              <button class="btn" id="send">Send</button>
-            </div>
-            <div class="drop" id="drophelp">Drop photo to attach</div>
-            <input type="file" id="file" accept="image/*" capture="environment" hidden>
-          </div>
+  <div class="app">
+    <header>
+      <div class="bar">
+        <div class="brand">🛣️ Road Issue Reporter</div>
+        <div class="url">
+          <input id="backend" type="url" inputmode="url" placeholder="Backend URL (e.g. https://road-chat-backend.onrender.com)"/>
+          <button class="small" id="saveUrl">Save</button>
         </div>
-        <div class="hint">Tip: drag & drop, paste (Ctrl/Cmd+V), or tap <strong>Attach</strong> to add a photo. We’ll ask only a couple of quick follow‑ups.</div>
-        <div class="quick" id="quick"></div>
+        <button class="small" id="exportBtn" title="Download CSV">Export</button>
       </div>
-    </div>
+    </header>
 
-    <footer>
-      <a href="#" id="reset">reset session</a>
-    </footer>
+    <main>
+      <div id="chat" class="chat"></div>
+    </main>
+
+    <div class="composer">
+      <div class="bar">
+        <div class="input" id="dropzone">
+          <textarea id="msg" rows="1" placeholder="Describe the issue or drop/paste a photo…"></textarea>
+        </div>
+        <div class="actions">
+          <input id="file" type="file" accept="image/*" capture="environment" hidden />
+          <button class="btn ghost" id="attach">📷</button>
+          <button class="btn primary" id="send">Send</button>
+        </div>
+      </div>
+      <div id="quick" class="chips"></div>
+      <div class="hint">Tip: you can paste images, drag & drop, or tap 📷 to open your camera.</div>
+    </div>
   </div>
 
   <script>
-    const chat = document.getElementById('chat');
-    const backendInput = document.getElementById('backend');
-    const text = document.getElementById('text');
-    const sendBtn = document.getElementById('send');
-    const chooseBtn = document.getElementById('choose');
-    const file = document.getElementById('file');
-    const dropbox = document.getElementById('dropbox');
-    const quick = document.getElementById('quick');
+    // --- tiny utilities ---
+    const $ = sel => document.querySelector(sel);
+    const chat = $('#chat');
+    const input = $('#msg');
+    const fileInput = $('#file');
+    const dropzone = $('#dropzone');
 
     function sid(){
-      let v = localStorage.getItem('session_id');
-      if(!v){ v = 'sess_' + Math.random().toString(36).slice(2); localStorage.setItem('session_id', v); }
+      let v = localStorage.getItem('sid');
+      if (!v){ v = crypto.randomUUID(); localStorage.setItem('sid', v); }
       return v;
     }
-    function backend(){
-      let url = localStorage.getItem('backend_url') || 'https://road-chat-backend.onrender.com';
-      backendInput.value = url; return url;
+    function backend(val){
+      if (val!==undefined){ localStorage.setItem('backend', val); return val; }
+      return localStorage.getItem('backend') || '';
     }
-    function saveBackend(){ const v = backendInput.value.trim(); if(v) localStorage.setItem('backend_url', v); }
-    backendInput.addEventListener('change', saveBackend); backendInput.addEventListener('blur', saveBackend);
 
     function row(role, html){
-      const r = document.createElement('div'); r.className = 'row '+role;
-      const b = document.createElement('div'); b.className = 'bubble'; b.innerHTML = html;
-      r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight;
+      const r = document.createElement('div');
+      r.className = 'row ' + role;
+      const b = document.createElement('div');
+      b.className = 'bubble';
+      b.innerHTML = html;
+      r.appendChild(b);
+      chat.appendChild(r);
+      chat.scrollTop = chat.scrollHeight;
       return b;
     }
-    function imgRow(role, src){
-      const r = document.createElement('div'); r.className = 'row '+role;
-      const b = document.createElement('div'); b.className = 'bubble imgbubble';
-      const img = document.createElement('img'); img.src = src; b.appendChild(img);
-      r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight;
+    function imgRow(role, blobUrl){
+      const r = document.createElement('div'); r.className = 'row ' + role;
+      const b = document.createElement('div'); b.className = 'bubble';
+      const img = document.createElement('img'); img.src = blobUrl; img.className='thumb'; img.alt='attached photo';
+      b.appendChild(img); r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight; return img;
     }
 
-    function setQuick(options){
-      quick.innerHTML = '';
-      options.forEach(opt => {
-        const c = document.createElement('button');
-        c.className = 'chip'; c.textContent = opt.label; c.title = opt.hint || '';
-        c.addEventListener('click', () => opt.onClick());
-        quick.appendChild(c);
-      });
-    }
-
-    function clearQuick(){ quick.innerHTML = ''; }
-
-    function parseGuess(text){
-      // Extract label from: "I think this looks like: pothole." (fallback best-effort)
-      const m = /looks like:\s*([\w_\-]+)/i.exec(text || '');
-      return m ? m[1].toLowerCase() : null;
-    }
-
-    async function send({textValue, fileObj}){
-      const url = backend();
-      const form = new FormData();
-      form.append('session_id', sid());
-      if(textValue) form.append('text', textValue);
-      if(fileObj) form.append('photo', fileObj, fileObj.name || 'photo.jpg');
-      sendBtn.disabled = true; chooseBtn.disabled = true;
-      try{
-        const res = await fetch(url + '/chat', { method:'POST', body: form });
-        const data = await res.json();
-        row('bot', escapeHtml(data.reply || '(no reply)'));
-
-        // Show quick replies based on context
-        const guess = parseGuess(data.reply || '');
-        if(guess){
-          setQuick([
-            {label:'Yes', onClick: ()=> { clearQuick(); row('me','Yes'); send({textValue:'yes'}); }},
-            {label:'No', onClick: ()=> { clearQuick(); row('me','No'); send({textValue:'no'}); }},
-            {label:'Change type…', hint:'Pick a different type', onClick: ()=> showTypePicker()} 
-          ]);
-        } else if(/How severe is it\?/i.test(data.reply||'')){
-          setQuick([
-            {label:'Minor', onClick: ()=> { clearQuick(); row('me','minor'); send({textValue:'minor'}); }},
-            {label:'Moderate', onClick: ()=> { clearQuick(); row('me','moderate'); send({textValue:'moderate'}); }},
-            {label:'Severe', onClick: ()=> { clearQuick(); row('me','severe'); send({textValue:'severe'}); }}
-          ]);
-        } else if(/What road/i.test(data.reply||'')){
-          setQuick([
-            {label:'Type location…', onClick: ()=> text.focus()}
-          ]);
-        } else {
-          clearQuick();
-        }
-      }catch(e){
-        row('bot', `<span style="color:var(--danger)">Error contacting backend: ${escapeHtml(e.message)}</span>`);
-      }finally{
-        sendBtn.disabled = false; chooseBtn.disabled = false;
+    function setQuickChips(kind){
+      const wrap = $('#quick');
+      wrap.innerHTML = '';
+      // Always useful chips
+      const chips = [
+        ['Use my location', onUseLocation],
+        ['Lane: Yes', ()=>send({textValue:'lane blocked yes'})],
+        ['Lane: No', ()=>send({textValue:'lane not blocked'})],
+        ['Severity: Minor', ()=>send({textValue:'severity minor'})],
+        ['Severity: Moderate', ()=>send({textValue:'severity moderate'})],
+        ['Severity: Severe', ()=>send({textValue:'severity severe'})],
+      ];
+      // Extra: common issue types
+      const issues = ['pothole','cracking','shoulder drop','guardrail','sign','drainage','debris','snow ice'];
+      issues.forEach(name=> chips.push([name, ()=>send({textValue:name})]));
+      for (const [label, handler] of chips){
+        const c = document.createElement('button'); c.className='chip'; c.textContent = label; c.onclick = handler; wrap.appendChild(c);
       }
     }
 
-    function showTypePicker(){
-      const types = ['pothole','cracking','shoulder_drop','guardrail','sign','drainage','debris','snow_ice'];
-      setQuick(types.map(t=>({label:t.replace('_',' '), onClick: ()=>{ clearQuick(); row('me', t.replace('_',' ')); send({textValue:t}); }})));
+    async function onUseLocation(){
+      if (!navigator.geolocation){ row('bot','Geolocation not supported on this device.'); return; }
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const {latitude, longitude} = pos.coords;
+        row('me', `📍 ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`);
+        send({textValue:'', coords:{lat:latitude, lon:longitude}});
+      }, err=>{
+        row('bot', `Couldn\'t get location (${err.code}). You can provide the road and milepost instead.`);
+      }, {enableHighAccuracy:true, timeout:8000, maximumAge:0});
     }
 
-    function escapeHtml(s){ return (s||'').replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+    function autosize(){
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 240) + 'px';
+    }
+    input.addEventListener('input', autosize);
 
-    // --- UX: Attach flow ---
-    chooseBtn.addEventListener('click', ()=> file.click());
-    file.addEventListener('change', ()=>{
-      const f = file.files[0]; if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ()=> imgRow('me', reader.result);
-      reader.readAsDataURL(f);
-      clearQuick();
-      send({ fileObj: f });
-      file.value = '';
+    // Paste image support
+    document.addEventListener('paste', (e)=>{
+      const items = e.clipboardData?.items || [];
+      for (const it of items){
+        if (it.type.startsWith('image/')){
+          const file = it.getAsFile();
+          const url = URL.createObjectURL(file);
+          imgRow('me', url);
+          send({ fileObj: file });
+          e.preventDefault();
+          break;
+        }
+      }
     });
 
     // Drag & drop
-    ['dragenter','dragover'].forEach(ev=> dropbox.addEventListener(ev, e=>{ e.preventDefault(); dropbox.classList.add('drag'); }));
-    ;['dragleave','dragend','drop'].forEach(ev=> dropbox.addEventListener(ev, e=>{ e.preventDefault(); dropbox.classList.remove('drag'); }));
-    dropbox.addEventListener('drop', e=>{
-      const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(!f) return;
-      const reader = new FileReader(); reader.onload=()=> imgRow('me', reader.result); reader.readAsDataURL(f);
-      clearQuick();
-      send({ fileObj: f });
-    });
-
-    // Paste image or text
-    document.addEventListener('paste', (e)=>{
-      if(e.clipboardData){
-        const items = e.clipboardData.items;
-        for(const it of items){
-          if(it.type && it.type.startsWith('image/')){
-            const f = it.getAsFile();
-            const reader = new FileReader(); reader.onload=()=> imgRow('me', reader.result); reader.readAsDataURL(f);
-            clearQuick();
-            send({ fileObj: f });
-            return;
-          }
-        }
+    ;['dragenter','dragover'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.style.borderColor = '#60a5fa';}));
+    ;['dragleave','drop'].forEach(ev=>dropzone.addEventListener(ev, e=>{e.preventDefault(); dropzone.style.borderColor = '#334155';}));
+    dropzone.addEventListener('drop', e=>{
+      const f = e.dataTransfer?.files?.[0];
+      if (f && f.type.startsWith('image/')){
+        const url = URL.createObjectURL(f); imgRow('me', url); send({fileObj:f});
       }
-      // otherwise, let text paste into input
     });
 
-    // Send text
-    sendBtn.addEventListener('click', ()=> {
-      const val = text.value.trim(); if(!val) return;
-      row('me', escapeHtml(val)); text.value = ''; clearQuick();
-      send({ textValue: val });
-    });
-    text.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); sendBtn.click(); }});
+    $('#attach').onclick = ()=> fileInput.click();
+    fileInput.onchange = ()=>{
+      const f = fileInput.files?.[0]; if(!f) return;
+      const url = URL.createObjectURL(f); imgRow('me', url); send({fileObj:f}); fileInput.value='';
+    };
 
-    // Reset session
-    document.getElementById('reset').addEventListener('click', (e)=>{
-      e.preventDefault(); localStorage.removeItem('session_id'); chat.innerHTML=''; clearQuick();
-      row('bot', 'Session reset. Attach a photo or type a message to begin.');
-    });
+    $('#send').onclick = ()=>{
+      const val = input.value.trim(); if(!val) return;
+      row('me', val); send({ textValue: val }); input.value=''; autosize();
+    };
 
-    // Init
-    backend();
-    row('bot', 'Hi! Attach a photo (drag, paste, or tap Attach) or describe the road issue. I’ll ask just a couple of follow‑ups.');
+    async function send({ textValue, fileObj, coords }){
+      const url = backend();
+      if (!url){ row('bot','Please set your backend URL (top right).'); return; }
+      try{
+        const fd = new FormData();
+        fd.append('session_id', sid());
+        if (textValue !== undefined) fd.append('text', textValue);
+        if (fileObj) fd.append('photo', fileObj, fileObj.name || 'photo.jpg');
+        if (coords?.lat && coords?.lon){ fd.append('lat', String(coords.lat)); fd.append('lon', String(coords.lon)); }
+        const res = await fetch(url.replace(/\/$/, '') + '/chat', { method:'POST', body: fd });
+        const data = await res.json();
+        // Render bot reply
+        row('bot', (data.reply || '').replaceAll('\n','<br/>'));
+        setQuickChips();
+      }catch(err){
+        row('bot', '⚠️ Error contacting server. Check your backend URL and CORS.');
+        console.error(err);
+      }
+    }
+
+    // Header controls
+    $('#saveUrl').onclick = ()=>{
+      const v = $('#backend').value.trim(); if(!v) return; backend(v); row('bot', 'Saved backend URL.');
+    };
+    $('#backend').value = backend();
+
+    $('#exportBtn').onclick = ()=>{
+      const url = backend(); if(!url){ row('bot','Set backend URL first.'); return; }
+      window.open(url.replace(/\/$/, '') + '/export.csv', '_blank');
+    };
+
+    // Initial
+    row('bot', 'Hi! Attach a photo or describe the issue. You can also tap “Use my location” for GPS.');
+    setQuickChips();
   </script>
 </body>
 </html>
