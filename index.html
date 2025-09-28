@@ -7,8 +7,7 @@
   <style>
     :root{
       --bg:#0b0f14; --card:#121820; --muted:#94a3b8; --text:#e5eef7;
-      --line:#1e293b; --chip:#1f2937; --chip-hover:#2b3542;
-      --radius:16px;
+      --line:#1e293b; --chip:#1f2937; --chip-hover:#2b3542; --radius:16px;
     }
     @media (prefers-color-scheme: light){
       :root{--bg:#f8fafc; --card:#ffffff; --text:#0b1220; --muted:#4b5563; --line:#e5e7eb; --chip:#f2f4f8; --chip-hover:#e5e7eb}
@@ -19,21 +18,18 @@
 
     .app{display:grid;grid-template-rows:auto 1fr auto;min-height:100svh}
 
-    /* Header */
     header{position:sticky;top:0;z-index:5;background:linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,0));padding:.6rem .9rem;border-bottom:1px solid var(--line)}
     .bar{display:flex;align-items:center;gap:.6rem}
     .brand{font-weight:700}
     .spacer{flex:1}
     .iconbtn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:12px;padding:.45rem .6rem}
 
-    /* Settings panel */
     .panel{display:none;padding:.6rem .9rem;border-bottom:1px solid var(--line);background:var(--card)}
     .panel.open{display:block}
     .rowc{display:flex;gap:.5rem;align-items:center}
     input[type=url]{flex:1;min-width:0;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:.55rem .7rem}
 
-    /* Chat */
-    main{overflow:auto;padding: .8rem .9rem 8.5rem}
+    main{overflow:auto;padding:.8rem .9rem 8.5rem}
     .chat{display:flex;flex-direction:column;gap:.6rem}
     .row{display:flex;gap:.6rem;align-items:flex-end}
     .row.me{justify-content:flex-end}
@@ -42,7 +38,12 @@
     .thumb{display:block;max-width:min(82vw,320px);border-radius:14px;border:1px solid var(--line)}
     .bot{opacity:.92}
 
-    /* Composer */
+    /* typing indicator */
+    .typing{display:inline-flex;gap:.25rem;align-items:center}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.8;animation:blink 1.3s infinite ease-in-out}
+    .dot:nth-child(2){animation-delay:.15s}.dot:nth-child(3){animation-delay:.3s}
+    @keyframes blink{0%,80%,100%{opacity:.2} 40%{opacity:1}}
+
     .composer{position:fixed;left:0;right:0;bottom:0;z-index:10;padding:.6rem .9rem calc(env(safe-area-inset-bottom) + .6rem);background:linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,0));border-top:1px solid var(--line)}
     .cbar{display:flex;gap:.5rem;align-items:flex-end}
     .input{flex:1;background:var(--card);border:1px dashed var(--line);border-radius:16px;padding:.55rem .7rem;min-height:48px}
@@ -51,7 +52,6 @@
     .btn{appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:14px;padding:.7rem .9rem;min-height:44px;min-width:44px}
     .primary{background:#2563eb;border:0}
 
-    /* Chips (contextual) */
     .chips{display:flex;flex-wrap:wrap;gap:.45rem;margin:.5rem .05rem 0}
     .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:.5rem .75rem;font-size:.93rem}
     .chip:active,.chip:hover{background:var(--chip-hover)}
@@ -92,7 +92,6 @@
   </div>
 
   <script>
-    // --------- tiny utils
     const $ = s => document.querySelector(s);
     const chat = $('#chat'), input = $('#msg'), fileInput = $('#file'), dropzone = $('#dropzone'), chips = $('#chips');
 
@@ -111,48 +110,40 @@
       b.appendChild(img); r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight; return img;
     }
 
-    // ---------- contextual chips ----------
+    // typing indicator
+    function typingOn(){
+      const r = document.createElement('div'); r.className = 'row bot'; r.id = 'typing';
+      const b = document.createElement('div'); b.className = 'bubble';
+      b.innerHTML = `<span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>`;
+      r.appendChild(b); chat.appendChild(r); chat.scrollTop = chat.scrollHeight;
+    }
+    function typingOff(){
+      const t = document.getElementById('typing'); if(t) t.remove();
+    }
+
+    // contextual chips (only when needed)
     function setChipsFor(message){
-      chips.innerHTML = '';   // clear
+      chips.innerHTML = '';
       if(!message) return;
-
       const m = message.toLowerCase();
-
-      // Only show after initial bot message or any explicit question
       const wantsSeverity = /severity/.test(m);
       const wantsLane     = /(lane.*blocked|blocked.*lane|whether a lane)/.test(m);
-      const wantsType     = /(what best describes the issue|problem type|issue type)/.test(m);
-      const wantsLocation = /(road name.*milepost|milepost|intersection)/.test(m);
-      const wantsGeo      = /(gps|location)/.test(m);
+      const wantsType     = /(problem type|issue type|what best describes the issue)/.test(m);
+      const wantsLocation = /(road name.*milepost|milepost|intersection)/.test(m) || /use my location/.test(m);
 
       const add = (label, handler) => {
-        const btn = document.createElement('button');
-        btn.className='chip'; btn.textContent = label; btn.onclick = handler;
+        const btn = document.createElement('button'); btn.className='chip'; btn.textContent = label;
+        btn.onclick = ()=>{ handler(); chips.innerHTML=''; }; // hide after tap
         chips.appendChild(btn);
       };
 
-      if(wantsLane){
-        add('Lane: Yes', ()=>send({text:'lane blocked yes'}));
-        add('Lane: No',  ()=>send({text:'lane not blocked'}));
-      }
-      if(wantsSeverity){
-        add('Severity: Minor',    ()=>send({text:'severity minor'}));
-        add('Severity: Moderate', ()=>send({text:'severity moderate'}));
-        add('Severity: Severe',   ()=>send({text:'severity severe'}));
-      }
-      if(wantsType){
-        ['pothole','cracking','shoulder drop','guardrail','sign','drainage','debris','snow ice']
-          .forEach(t=> add(t, ()=>send({text:t})));
-      }
-      if(wantsLocation){
-        add('Use my location', onUseLocation);
-      } else if(wantsGeo){
-        add('Use my location', onUseLocation);
-      }
-      // If no follow-ups detected, keep chips hidden.
+      if(wantsLane){ add('Lane: Yes', ()=>send({text:'lane blocked yes'})); add('Lane: No', ()=>send({text:'lane not blocked'})); }
+      if(wantsSeverity){ add('Severity: Minor', ()=>send({text:'severity minor'})); add('Severity: Moderate', ()=>send({text:'severity moderate'})); add('Severity: Severe', ()=>send({text:'severity severe'})); }
+      if(wantsType){ ['pothole','cracking','shoulder drop','guardrail','sign','drainage','debris','snow ice'].forEach(t=> add(t, ()=>send({text:t}))); }
+      if(wantsLocation){ add('Use my location', onUseLocation); }
     }
 
-    // ---------- geolocation
+    // geolocation
     function onUseLocation(){
       if(!navigator.geolocation){ row('bot','Geolocation not supported on this device.'); return; }
       navigator.geolocation.getCurrentPosition(pos=>{
@@ -164,7 +155,7 @@
       }, {enableHighAccuracy:true, timeout:8000, maximumAge:0});
     }
 
-    // ---------- input sizing
+    // input sizing
     function autosize(){ input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,240)+'px'; }
     input.addEventListener('input', autosize);
 
@@ -183,7 +174,7 @@
     fileInput.onchange   = ()=>{ const f = fileInput.files?.[0]; if(!f) return; const u=URL.createObjectURL(f); imgRow('me',u); send({file:f}); fileInput.value=''; };
     $('#send').onclick   = ()=>{ const v=input.value.trim(); if(!v) return; row('me',v); send({text:v}); input.value=''; autosize(); };
 
-    // settings panel
+    // settings
     const panel = $('#panel');
     $('#gear').onclick   = ()=> panel.classList.toggle('open');
     $('#saveUrl').onclick= ()=>{ const v=$('#backend').value.trim(); if(!v) return; backend(v); row('bot','Saved backend URL.'); panel.classList.remove('open'); };
@@ -192,7 +183,7 @@
     // export
     $('#exportBtn').onclick = ()=>{ const url=backend(); if(!url){ row('bot','Set backend URL in ⚙️ first.'); return; } window.open(url.replace(/\/$/,'')+'/export.csv','_blank'); };
 
-    // --------- send() to backend
+    // send() with typing indicator + slight delay for natural feel
     async function send({text, file, coords}){
       const url = backend();
       if(!url){ row('bot','Please set your backend URL in ⚙️ Settings.'); return; }
@@ -203,22 +194,25 @@
         if(file) fd.append('photo', file, file.name || 'photo.jpg');
         if(coords?.lat && coords?.lon){ fd.append('lat', String(coords.lat)); fd.append('lon', String(coords.lon)); }
 
+        typingOn();
         const res = await fetch(url.replace(/\/$/,'')+'/chat', { method:'POST', body: fd });
         const data = await res.json();
+        await new Promise(r=>setTimeout(r, 650)); // gentle pause
+        typingOff();
+
         const reply = (data.reply || '').replaceAll('\n','<br/>');
         const bubble = row('bot', reply);
 
-        // Decide which chips to show based on the bot’s last question
-        setChipsFor(bubble.textContent.toLowerCase());
+        setChipsFor(bubble.textContent.toLowerCase()); // show only relevant chips
       }catch(e){
+        typingOff();
         console.error(e);
         row('bot','⚠️ Could not reach backend. Check URL & CORS.');
       }
     }
 
     // initial message
-    const hello = row('bot','Hi! Attach a photo or describe the issue. I’ll only ask a couple of quick follow-ups.');
-    setChipsFor(''); // none initially
+    row('bot','Hi! Send a photo or describe the issue. I’ll only ask what I need, one step at a time.');
   </script>
 </body>
 </html>
